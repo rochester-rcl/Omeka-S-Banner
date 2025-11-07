@@ -4,33 +4,34 @@ $this->pageTitle($this->translate('Banner Settings'));
 ?>
 
 <div id="page-actions">
-    <?php echo $this->hyperlink($this->translate('Back to site admin'),
-        $this->url('admin/site', [], true), ['class' => 'button']); ?>
+    <?php echo $this->hyperlink($this->translate('Back to site admin'), $this->url('admin/site', [], true), ['class' => 'button']); ?>
 </div>
 
 <form method="post">
     <fieldset>
         <legend><?php echo $this->translate('Banner Configuration'); ?></legend>
         <?php
-        if (!isset($settings)){$settings=array("site_banner_enabled"=>"");}
+        if (!isset($settings)) {
+            $settings = array("site_banner_enabled" => "");
+        }
         ?>
 
         <div class="field">
             <div class="field-meta">
-                <label for="site_banner_enabled"><?php echo $this->translate('Enabled?'); ?></label>
+                <label for="site_banner" <?php echo $this->translate("Banner Content (HTML)");?>></label>
+                <div class="field-description">
+                    <?php echo $this->translate('The site level banner appears above all site content, but below the global banner.'); ?>
+                    <input type="text" name="site_banner" id="site_banner" value="<?php echo BANNER_GLOBAL_DEFAULT?>>
+                    <label for="site_banner_enabled"><?php echo $this->translate('Enabled?'); ?>"</label>
                 <div class="field-description">
                     <?php echo $this->translate('Is the site-level banner currently visible?'); ?>
                 </div>
-            </div>
-            <div class="inputs">
+                <input type="checkbox" name="site_banner_enabled" id="site_banner_enabled"
+                       value="1" <?php echo $settings['site_banner_enabled'] ? 'checked' : ''; ?>>
+                <?php echo $this->translate('Enabled?'); ?>
 
-                <label>
-                    <input type="checkbox" name="site_banner_enabled" id="site_banner_enabled" value="1"
-                        >
-                    <?php echo $this->translate('Enabled?'); ?>
-                </label>
+
             </div>
-        </div>
     </fieldset>
 
     <div class="field">

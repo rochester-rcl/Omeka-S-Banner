@@ -26,8 +26,6 @@ define('BANNER_GLOBAL_DEFAULT','<div class="maintenance-banner">
     text-align: center;
   }
 </style>');
-
-
 return [
     'controllers' => [
         'invokables' => [
