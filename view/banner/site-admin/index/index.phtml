@@ -1,6 +1,6 @@
 <?php
 $this->htmlElement('body')->appendAttribute('class', 'banner site-admin index');
-$this->pageTitle($this->translate('Banner Settings'));
+$this->pageTitle('Banner Settings');
 ?>
 
 <div id="page-actions">
@@ -9,10 +9,10 @@ $this->pageTitle($this->translate('Banner Settings'));
 
 <form method="post">
     <fieldset>
-        <legend><?php echo $this->translate('Banner Configuration'); ?></legend>
+        <legend>Banner Configuration</legend>
         <?php
         if (!isset($settings)) {
-            $settings = array("site_banner_enabled" => "");
+            $settings = array("site_banner_enabled" => false, "site_banner_content" => BANNER_SITE_DEFAULT);
         }
         ?>
 
@@ -31,11 +31,11 @@ $this->pageTitle($this->translate('Banner Settings'));
 
         <div class="field">
             <div class="field-meta">
-                <label for="site_banner"> Banner Content (HTML)? </label>
+                <label for="site_banner_content"> Banner Content (HTML)? </label>
                 <div class="field-description">
-                    'The site level banner appears above all site content, but below the global banner.');
+                    The site level banner appears above all site content, but below the global banner.
                 </div>
-                <textarea name="site_banner" rows="12" cols="64" id="site_banner" ><?php echo BANNER_GLOBAL_DEFAULT ?></textarea>
+                <textarea name="site_banner_content" rows="12" cols="64" id="site_banner" ><?php echo $settings["site_banner_content"]?> </textarea>
 
             </div>
     </fieldset>

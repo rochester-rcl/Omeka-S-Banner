@@ -26,6 +26,35 @@ define('BANNER_GLOBAL_DEFAULT','<div class="maintenance-banner">
     text-align: center;
   }
 </style>');
+
+define('BANNER_SITE_DEFAULT','<div class="maintenance-banner">
+This site recently experienced a redesign as of __/__/____. Please provide any feedback on this redesign by clicking <a href="#">here.</a>
+</div>
+  .maintenance-banner {
+    width: 100%;
+    height: 10vh;
+    background-color: #28a745;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 9999;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .maintenance-banner p {
+    color: white;
+    font-weight: bold;
+    font-size: 1.2em;
+    margin: 0;
+    padding: 0 20px;
+    text-align: center;
+  }
+'
+
+
+);
 return [
     'controllers' => [
         'invokables' => [
@@ -40,7 +69,7 @@ return [
                 'controller' => 'index',
                 'action' => 'index',
                 'useRouteMatch' => true,
-                'resource' => 'banner\Controller\SiteAdmin\Index',
+                'resource' => 'Banner\Controller\SiteAdmin\Index',
             ],
         ],
     ],

@@ -24,33 +24,7 @@ class SettingsFieldset extends Fieldset
                     ],
                 'attributes'=>[ 'id' =>  'global_banner',
                 'rows' => 3,
-                    'value'=> '<div class="maintenance-banner">
-  <p>⚠️ Omeka S will be down for maintenance on __/__/____, from __ to __. Thank you for your patience.</p>
-</div>
-
-<style>
-  .maintenance-banner {
-    width: 100%;
-    height: 10vh;
-    background-color: #28a745;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    z-index: 9999;
-    margin: 0;
-    padding: 0;
-  }
-  
-  .maintenance-banner p {
-    color: white;
-    font-weight: bold;
-    font-size: 1.2em;
-    margin: 0;
-    padding: 0 20px;
-    text-align: center;
-  }
-</style>'
+                    'value'=> BANNER_GLOBAL_DEFAULT,
 
 
                 ]

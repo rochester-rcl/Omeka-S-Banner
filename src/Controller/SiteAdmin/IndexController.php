@@ -14,9 +14,9 @@ class IndexController extends AbstractActionController
         if ($this->getRequest()->isPost()) {
             $data = $this->params()->fromPost();
             $siteBannerEnabled = isset($data['site_banner_enabled']) ? (bool)$data['site_banner_enabled'] : false;
-
+            $siteBannerConent = isset($data['site_banner_content']) ? (string)$data['site_banner_content'] : '';
             // Save basic settings
-            $siteSettings->set('site_banner', $data['site_banner'] ?? BANNER_GLOBAL_DEFAULT);
+            $siteSettings->set('site_banner_content', $data['site_banner_content'] ?? BANNER_SITE_DEFAULT);
             //Site Banner Enabled setting
             $siteSettings->set('site_banner_enabled', $siteBannerEnabled);
             return $this->redirect()->toRoute('admin/site/slug/banner', [], true);
@@ -30,7 +30,8 @@ class IndexController extends AbstractActionController
 
         // Prepare settings for the view
         $settings = [
-            'site_banner_enabled' => $siteSettings->get('site_banner_enabled')
+            'site_banner_enabled' => $siteSettings->get('site_banner_enabled'),
+            'site_banner_content' => $siteSettings->get('site_banner_content'),
         ];
         return new ViewModel([
             'site' => $site,
