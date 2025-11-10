@@ -18,18 +18,24 @@ $this->pageTitle($this->translate('Banner Settings'));
 
         <div class="field">
             <div class="field-meta">
-                <label for="site_banner" <?php echo $this->translate("Banner Content (HTML)");?>></label>
-                <div class="field-description">
-                    <?php echo $this->translate('The site level banner appears above all site content, but below the global banner.'); ?>
-                    <input type="text" name="site_banner" id="site_banner" value="<?php echo BANNER_GLOBAL_DEFAULT?>>
-                    <label for="site_banner_enabled"><?php echo $this->translate('Enabled?'); ?>"</label>
+                <label for="site_banner_enabled">Enabled?</label>
                 <div class="field-description">
                     <?php echo $this->translate('Is the site-level banner currently visible?'); ?>
                 </div>
-                <input type="checkbox" name="site_banner_enabled" id="site_banner_enabled"
-                       value="1" <?php echo $settings['site_banner_enabled'] ? 'checked' : ''; ?>>
-                <?php echo $this->translate('Enabled?'); ?>
+            </div>
+            <input type="checkbox" name="site_banner_enabled" id="site_banner_enabled"
+                   value="1" <?php echo $settings['site_banner_enabled'] ? 'checked' : ''; ?> />
 
+        </div>
+
+
+        <div class="field">
+            <div class="field-meta">
+                <label for="site_banner"> Banner Content (HTML)? </label>
+                <div class="field-description">
+                    'The site level banner appears above all site content, but below the global banner.');
+                </div>
+                <textarea name="site_banner" rows="12" cols="64" id="site_banner" ><?php echo BANNER_GLOBAL_DEFAULT ?></textarea>
 
             </div>
     </fieldset>
