@@ -1,0 +1,48 @@
+<?php
+$this->htmlElement('body')->appendAttribute('class', 'banner site-admin index');
+$this->pageTitle('Banner Settings');
+?>
+
+<div id="page-actions">
+    <?php echo $this->hyperlink($this->translate('Back to site admin'), $this->url('admin/site', [], true), ['class' => 'button']); ?>
+</div>
+
+<form method="post">
+    <fieldset>
+        <legend>Banner Configuration</legend>
+        <?php
+        if (!isset($settings)) {
+            $settings = array("site_banner_enabled" => false, "site_banner_content" => BANNER_SITE_DEFAULT);
+        }
+        ?>
+
+        <div class="field">
+            <div class="field-meta">
+                <label for="site_banner_enabled">Enabled?</label>
+                <div class="field-description">
+                    <?php echo $this->translate('Is the site-level banner currently visible?'); ?>
+                </div>
+            </div>
+            <input type="checkbox" name="site_banner_enabled" id="site_banner_enabled"
+                   value="1" <?php echo $settings['site_banner_enabled'] ? 'checked' : ''; ?> />
+
+        </div>
+
+
+        <div class="field">
+            <div class="field-meta">
+                <label for="site_banner_content"> Banner Content (HTML)? </label>
+                <div class="field-description">
+                    The site level banner appears above all site content, but below the global banner.
+                </div>
+                <textarea name="site_banner_content" rows="12" cols="64" id="site_banner" ><?php echo $settings["site_banner_content"]?> </textarea>
+
+            </div>
+    </fieldset>
+
+    <div class="field">
+        <input type="submit" value="<?php echo $this->escapeHtml($this->translate('Save')); ?>" class="button">
+    </div>
+
+</form>
+

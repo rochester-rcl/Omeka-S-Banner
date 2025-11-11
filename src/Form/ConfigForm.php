@@ -1,0 +1,35 @@
+<?php
+
+namespace Banner\Form;
+
+use Laminas\Form\Form;
+
+class ConfigForm extends Form
+{
+    protected $globalSettings;
+    public function init(){
+        $this -> add([
+        ['type' => 'checkbox',
+            'name' => 'global_banner_enabled',
+            'options' => [
+            'label' => 'Is the global banner currently visible?',
+            ],
+            'attributes' => [
+            'checked' => $this->globalSettings->get('global_banner_enabled') ? 'checked' : '',
+            'id' => 'global_banner_enabled',
+            ],
+        ],
+
+        'type' => 'textarea',
+                'name' => 'global_banner_content',
+                'options' => [
+                    'label'=>'What do you want the banner to display? The global banner appears above all content, including any site banner.'
+                    ],
+                'attributes' => ['id'=>'global_banner_content'],
+
+        ],
+        );
+        $this.get('global_banner_content')->setValue(BANNER_GLOBAL_DEFAULT);
+
+    }
+}
