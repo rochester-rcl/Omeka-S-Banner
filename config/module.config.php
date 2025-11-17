@@ -29,7 +29,7 @@ define('BANNER_GLOBAL_DEFAULT', '<div class="maintenance-banner">
 
 define('BANNER_SITE_DEFAULT', '<div class="maintenance-banner">
 This site recently experienced a redesign as of __/__/____. Please provide any feedback on this redesign by clicking <a href="#">here.</a>
-</div>
+</div><style>
   .maintenance-banner {
     width: 100%;
     height: 10vh;
@@ -50,11 +50,11 @@ This site recently experienced a redesign as of __/__/____. Please provide any f
     margin: 0;
     padding: 0 20px;
     text-align: center;
-  }
-'
+  }</style>
+')
 
 
-);
+;
 return [
     'controllers' => [
         'invokables' => [

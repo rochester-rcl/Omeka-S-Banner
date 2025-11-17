@@ -1,7 +1,22 @@
 <?php
-
 namespace Banner;
+use Banner\Form\ConfigForm;
+use Laminas\View\Renderer\PhpRenderer;
+use Omeka\Module\AbstractModule;
 
+class Module extends AbstractModule
+{
+    public function getConfig()
+    {
+        return include __DIR__ . '/config/module.config.php';
+    }
+    public function getConfigForm(PhpRenderer $renderer){
+        return include __DIR__ . '/src/Form/ConfigForm.php';
+    }
+}
+/*
+namespace Banner;
+define ('NAMESPACE', 'Banner');
 use Common\TraitModule;
 use Laminas\EventManager\SharedEventManagerInterface;
 use Omeka\Module\AbstractModule;
@@ -15,6 +30,7 @@ if (!class_exists(TraitModule::class)) {
 class Module extends AbstractModule
 {
     use TraitModule;
+
 
     public function getConfig()
     {
@@ -37,4 +53,4 @@ class Module extends AbstractModule
             [$this, 'handleMainSettings']
         );
     }
-}
+}*/
