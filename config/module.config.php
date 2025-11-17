@@ -59,7 +59,7 @@ return [
     'controllers' => [
         'invokables' => [
             'Banner\Controller\SiteAdmin\Index' => 'Banner\Controller\SiteAdmin\IndexController',
-            'Banner\Controller\Admin\Index' => 'Banner\Controller\Admin\IndexController'
+            'Banner\Form\ConfigForm' => 'Banner\Controller\Config\IndexController'
         ],
     ],
     'navigation' => [

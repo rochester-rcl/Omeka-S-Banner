@@ -1,6 +1,6 @@
 <?php
 
-
+namespace Banner;
 use Laminas\Form\Form;
 
 

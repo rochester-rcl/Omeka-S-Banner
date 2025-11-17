@@ -1,5 +1,5 @@
 <?php
-namespace Banner\Controller\Admin;
+namespace Banner\Controller\Config;
 
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
