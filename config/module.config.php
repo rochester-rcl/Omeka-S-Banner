@@ -73,16 +73,6 @@ return [
                 'resource' => 'Banner\Controller\SiteAdmin\Index',
             ],
         ],
-        'AdminModule' =>[
-            [
-                'label' => 'Banner',
-                'route' => 'admin/banner',
-                'controller' => 'index',
-                'action' => 'index',
-                'useRouteMatch' => true,
-                'resource' => 'Banner\Controller\Admin\Index'
-            ],
-        ],
     ],
     'router' => [
         'routes' => [
