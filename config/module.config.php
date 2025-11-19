@@ -59,8 +59,9 @@ return [
     'controllers' => [
         'invokables' => [
             'Banner\Controller\SiteAdmin\Index' => 'Banner\Controller\SiteAdmin\IndexController',
-            'Banner\Form\ConfigForm' => 'Banner\Controller\Config\IndexController'
-        ],
+            ],
+
+
     ],
     'navigation' => [
         'site' => [
@@ -123,5 +124,10 @@ return [
             'banner' => 'banner\View\Helper\banner',
         ],
     ],
+
+    'form_elements' =>['invokeables'=>[
+        'ConfigForm' => 'Banner\Form\ConfigForm',
+
+    ]]
 ];
 
