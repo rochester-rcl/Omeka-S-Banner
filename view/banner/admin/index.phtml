@@ -1,0 +1,65 @@
+<?php
+$this->htmlElement('body')->appendAttribute('class', 'banner site-admin index');
+$this->pageTitle('Banner Settings');
+?>
+
+<div id="page-actions">
+</div>
+
+<form method="post">
+    <fieldset>
+        <legend>Banner Configuration</legend>
+        <?php
+        if (!isset($settings)) {
+            $settings = [
+                'site_banner_enabled'    => false,
+                'site_banner_text'       => BANNER_SITE_DEFAULT_TEXT,
+                'site_banner_bg_color'   => BANNER_SITE_DEFAULT_BG_COLOR,
+                'site_banner_text_color' => BANNER_SITE_DEFAULT_TEXT_COLOR,
+            ];
+        }
+        ?>
+
+        <div class="field">
+            <div class="field-meta">
+                <label for="site_banner_enabled">Enabled?</label>
+                <div class="field-description">
+                    <?php echo $this->translate('Is the site-level banner currently visible?'); ?>
+                </div>
+            </div>
+            <input type="checkbox" name="site_banner_enabled" id="site_banner_enabled"
+                   value="1" <?php echo $settings['site_banner_enabled'] ? 'checked' : ''; ?> />
+        </div>
+
+        <div class="field">
+            <div class="field-meta">
+                <label for="site_banner_text">Banner text</label>
+                <div class="field-description">
+                    The site level banner appears above all site content, but below the global banner. Supports multiple lines and emoji.
+                </div>
+            </div>
+            <textarea name="site_banner_text" rows="4" cols="64" id="site_banner_text"><?php echo $this->escapeHtml($settings['site_banner_text']); ?></textarea>
+        </div>
+
+        <div class="field">
+            <div class="field-meta">
+                <label for="site_banner_bg_color">Background color</label>
+            </div>
+            <input type="color" name="site_banner_bg_color" id="site_banner_bg_color"
+                   value="<?php echo $this->escapeHtmlAttr($settings['site_banner_bg_color']); ?>" />
+        </div>
+
+        <div class="field">
+            <div class="field-meta">
+                <label for="site_banner_text_color">Text color</label>
+            </div>
+            <input type="color" name="site_banner_text_color" id="site_banner_text_color"
+                   value="<?php echo $this->escapeHtmlAttr($settings['site_banner_text_color']); ?>" />
+        </div>
+    </fieldset>
+
+    <div class="field">
+        <input type="submit" value="<?php echo $this->escapeHtml($this->translate('Save')); ?>" class="button">
+    </div>
+
+</form>
