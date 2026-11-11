@@ -1,10 +1,10 @@
 <?php
 define('BANNER_GLOBAL_DEFAULT_TEXT', "⚠️ Omeka S will be down for maintenance on __/__/____, from __ to __. Thank you for your patience.");
-define('BANNER_GLOBAL_DEFAULT_BG_COLOR', '#28a745');
+define('BANNER_GLOBAL_DEFAULT_BG_COLOR', '#1e7e34');
 define('BANNER_GLOBAL_DEFAULT_TEXT_COLOR', '#ffffff');
 
 define('BANNER_SITE_DEFAULT_TEXT', "This site recently experienced a redesign as of __/__/____. Please provide any feedback.");
-define('BANNER_SITE_DEFAULT_BG_COLOR', '#17a2b8');
+define('BANNER_SITE_DEFAULT_BG_COLOR', '#117a8b');
 define('BANNER_SITE_DEFAULT_TEXT_COLOR', '#ffffff');
 
 return [

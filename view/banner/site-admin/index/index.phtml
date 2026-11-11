@@ -1,7 +1,15 @@
 <?php
+$settings = $settings ?? [];
+$contrastRatio = $contrast_ratio ?? 4.5;
+
 $this->htmlElement('body')->appendAttribute('class', 'banner site-admin index');
-$this->pageTitle('Banner Settings');
+
+// CKEditor and the banner-specific editor configuration/warnings.
+$this->ckEditor();
+$this->headScript()->appendFile(\Banner\Module::assetUrlFor($this, 'js/banner-editor.js'));
 ?>
+
+<?php echo $this->pageTitle($this->translate('Banner'), 1, $this->translate('Sites')); ?>
 
 <div id="page-actions">
     <?php echo $this->hyperlink($this->translate('Back to site admin'), $this->url('admin/site/slug', [], true), ['class' => 'button']); ?>
@@ -11,7 +19,7 @@ $this->pageTitle('Banner Settings');
     <fieldset>
         <legend>Site Banner Configuration</legend>
 
-        <?php if (!isset($settings)) {
+        <?php if (!isset($settings['site_banner_enabled'])) {
             $settings = [
                 'site_banner_enabled'    => false,
                 'site_banner_text'       => BANNER_SITE_DEFAULT_TEXT,
@@ -37,11 +45,12 @@ $this->pageTitle('Banner Settings');
             <div class="field-meta">
                 <label for="site_banner_text"><?php echo $this->translate('Banner text'); ?></label>
                 <div class="field-description">
-                    <?php echo $this->translate('The site-level banner appears below the global banner (when present) on all public pages of this site. Supports multiple lines and emoji.'); ?>
+                    <?php echo $this->translate('The site-level banner appears below the global banner (when present) on all public pages of this site. Supports bold, italic, underline, and links (http, https, mailto, and relative URLs). Pasted formatting outside these is removed when saved.'); ?>
                 </div>
             </div>
             <div class="inputs">
-                <textarea name="site_banner_text" rows="4" cols="64" id="site_banner_text"><?php echo $this->escapeHtml($settings['site_banner_text']); ?></textarea>
+                <textarea name="site_banner_text" rows="4" cols="64" id="site_banner_text"
+                          data-banner-editor="1" data-editor-title="Site banner text"><?php echo $this->escapeHtml($settings['site_banner_text']); ?></textarea>
             </div>
         </div>
 
@@ -58,10 +67,17 @@ $this->pageTitle('Banner Settings');
         <div class="field">
             <div class="field-meta">
                 <label for="site_banner_text_color"><?php echo $this->translate('Text color'); ?></label>
+                <div class="field-description">
+                    <?php echo $this->translate('WCAG AA requires a contrast ratio of at least 4.5:1 between the text and background for normal-size text. The banner keeps the colors you choose and shows a warning when the pair falls below that ratio.'); ?>
+                </div>
             </div>
             <div class="inputs">
                 <input type="color" name="site_banner_text_color" id="site_banner_text_color"
                        value="<?php echo $this->escapeHtmlAttr($settings['site_banner_text_color']); ?>" />
+                <div class="field-description" data-banner-contrast-status aria-live="polite">
+                    Current contrast ratio: <?php echo $this->escapeHtml(number_format((float) $contrastRatio, 2)); ?>:1.
+                    WCAG AA requires at least 4.5:1 for normal-size text.
+                </div>
             </div>
         </div>
     </fieldset>

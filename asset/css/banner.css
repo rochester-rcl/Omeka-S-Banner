@@ -1,0 +1,56 @@
+/*
+ * Announcement banner presentation.
+ *
+ * Colors are applied inline by banner.js from the administrator's settings.
+ * Everything that does not depend on those settings lives here so themes can
+ * override it and so links keep an accessible focus indicator.
+ */
+.omeka-banner {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75em 1em;
+    box-sizing: border-box;
+}
+
+.omeka-banner__content {
+    margin: 0;
+    max-width: 100%;
+    text-align: center;
+    font-size: 1.1em;
+    line-height: 1.5;
+}
+
+.omeka-banner__content p {
+    margin: 0;
+}
+
+.omeka-banner__content p + p,
+.omeka-banner__content ul + p,
+.omeka-banner__content p + ul {
+    margin-top: 0.25em;
+}
+
+.omeka-banner__content ul,
+.omeka-banner__content ol {
+    margin: 0.25em 0;
+    padding-left: 1.5em;
+    text-align: left;
+}
+
+.omeka-banner__content a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+
+.omeka-banner__content a:hover {
+    text-decoration-thickness: 2px;
+}
+
+/* A visible keyboard focus indicator is required by WCAG 2.4.7. */
+.omeka-banner__content a:focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 2px;
+}
