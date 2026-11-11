@@ -1,6 +1,8 @@
 <?php
 namespace Banner;
 
+use Banner\Stdlib\ColorContrast;
+use Banner\Stdlib\HtmlSanitizer;
 use Laminas\EventManager\Event;
 use Laminas\EventManager\SharedEventManagerInterface;
 use Laminas\Mvc\Controller\AbstractController;
@@ -34,12 +36,37 @@ class Module extends AbstractModule
 
         $formElementManager = $services->get('FormElementManager');
         $form = $formElementManager->get(Form\ConfigForm::class);
+
+        $bgColor = $this->validColor(
+            $settings->get('global_banner_bg_color'),
+            BANNER_GLOBAL_DEFAULT_BG_COLOR
+        );
+        $textColor = $this->validColor(
+            $settings->get('global_banner_text_color'),
+            BANNER_GLOBAL_DEFAULT_TEXT_COLOR
+        );
+
         $form->setData([
             'global_banner_enabled'    => (bool) $settings->get('global_banner_enabled', false),
             'global_banner_text'       => $settings->get('global_banner_text', BANNER_GLOBAL_DEFAULT_TEXT),
-            'global_banner_bg_color'   => $settings->get('global_banner_bg_color', BANNER_GLOBAL_DEFAULT_BG_COLOR),
-            'global_banner_text_color' => $settings->get('global_banner_text_color', BANNER_GLOBAL_DEFAULT_TEXT_COLOR),
+            'global_banner_bg_color'   => $bgColor,
+            'global_banner_text_color' => $textColor,
         ]);
+
+        $form->get('global_banner_text_color')->setOption(
+            'info',
+            sprintf(
+                'Current contrast ratio: %.2f:1. WCAG AA requires at least 4.5:1 between text and background for normal-size text. The banner keeps the colors you choose and warns when the pair falls below that ratio.',
+                ColorContrast::ratio($bgColor, $textColor)
+            )
+        );
+
+        // Load the rich-text editor (CKEditor) and the banner-specific
+        // configuration/contrast warnings for the global settings form.
+        $renderer->ckEditor();
+        $renderer->headScript()->appendFile(
+            self::assetUrlFor($renderer, 'js/banner-editor.js')
+        );
 
         return $renderer->formCollection($form);
     }
@@ -50,10 +77,36 @@ class Module extends AbstractModule
         $services = $this->getServiceLocator();
         $settings = $services->get('Omeka\Settings');
 
-        $settings->set('global_banner_enabled', (bool) ($params['global_banner_enabled'] ?? false));
-        $settings->set('global_banner_text', $params['global_banner_text'] ?? '');
-        $settings->set('global_banner_bg_color', $params['global_banner_bg_color'] ?? BANNER_GLOBAL_DEFAULT_BG_COLOR);
-        $settings->set('global_banner_text_color', $params['global_banner_text_color'] ?? BANNER_GLOBAL_DEFAULT_TEXT_COLOR);
+        $sanitizer = new HtmlSanitizer();
+
+        $settings->set(
+            'global_banner_enabled',
+            (bool) ($params['global_banner_enabled'] ?? false)
+        );
+        $settings->set(
+            'global_banner_text',
+            $sanitizer->sanitize((string) ($params['global_banner_text'] ?? ''))
+        );
+        $settings->set(
+            'global_banner_bg_color',
+            $this->validColor(
+                $params['global_banner_bg_color'] ?? null,
+                BANNER_GLOBAL_DEFAULT_BG_COLOR
+            )
+        );
+        $settings->set(
+            'global_banner_text_color',
+            $this->validColor(
+                $params['global_banner_text_color'] ?? null,
+                BANNER_GLOBAL_DEFAULT_TEXT_COLOR
+            )
+        );
+
+        $this->warnOnLowContrast(
+            $controller,
+            $settings->get('global_banner_bg_color'),
+            $settings->get('global_banner_text_color')
+        );
     }
 
     public function attachListeners(SharedEventManagerInterface $sharedEventManager)
@@ -89,74 +142,34 @@ class Module extends AbstractModule
         $enabled  = $settings->get('global_banner_enabled');
         $text     = (string) $settings->get('global_banner_text', '');
 
-        if (!$enabled || $text === '') {
+        if (!$enabled || !$this->hasVisibleText($text)) {
             return;
         }
 
-        $bgColor   = (string) $settings->get('global_banner_bg_color', BANNER_GLOBAL_DEFAULT_BG_COLOR);
-        $textColor = (string) $settings->get('global_banner_text_color', BANNER_GLOBAL_DEFAULT_TEXT_COLOR);
+        $renderer = $services->get('ViewRenderer');
+        $html = (new HtmlSanitizer())->toDisplayHtml($text);
 
-        $jsText      = json_encode($text);
-        $jsBgColor   = json_encode($bgColor);
-        $jsTextColor = json_encode($textColor);
+        $banners = [[
+            'id' => 'global-banner',
+            'className' => 'global-banner',
+            'label' => $renderer->translate('Global announcement'),
+            'html' => $html,
+            'bgColor' => $this->validColor(
+                $settings->get('global_banner_bg_color'),
+                BANNER_GLOBAL_DEFAULT_BG_COLOR
+            ),
+            'textColor' => $this->validColor(
+                $settings->get('global_banner_text_color'),
+                BANNER_GLOBAL_DEFAULT_TEXT_COLOR
+            ),
+        ]];
 
-        $script = <<<JS
-document.addEventListener('DOMContentLoaded', function() {
-    var banner = document.createElement('div');
-    banner.id = 'global-banner';
-    banner.className = 'omeka-banner global-banner';
-    banner.style.width = '100%';
-    banner.style.backgroundColor = {$jsBgColor};
-    banner.style.color = {$jsTextColor};
-    banner.style.display = 'flex';
-    banner.style.alignItems = 'center';
-    banner.style.justifyContent = 'center';
-    banner.style.padding = '0.75em 1em';
-    banner.style.boxSizing = 'border-box';
-
-    var p = document.createElement('p');
-    p.style.margin = '0';
-    p.style.textAlign = 'center';
-    p.style.fontWeight = 'bold';
-    p.style.fontSize = '1.1em';
-    p.style.whiteSpace = 'pre-wrap';
-    p.textContent = {$jsText};
-    banner.appendChild(p);
-
-    var flex = document.querySelector('div.flex');
-    if (flex) {
-        flex.parentNode.insertBefore(banner, flex);
-    } else {
-        document.body.insertBefore(banner, document.body.firstChild);
-    }
-
-    // Fixed elements (page title, action buttons, sidebar) are anchored to top: 0.
-    // Push them down by the banner height so they don't overlap the banner.
-    var offset = banner.offsetHeight;
-    if (offset > 0) {
-        var h1 = document.querySelector('div[role="main"] > h1:first-of-type');
-        if (h1) {
-            h1.style.top = offset + 'px';
-        }
-        var pageActions = document.getElementById('page-actions');
-        if (pageActions) {
-            pageActions.style.top = offset + 'px';
-        }
-        var main = document.querySelector('div[role="main"]');
-        if (main) {
-            var currentPadding = parseInt(window.getComputedStyle(main).paddingTop, 10) || 0;
-            main.style.paddingTop = (currentPadding + offset) + 'px';
-        }
-        document.querySelectorAll('.sidebar').forEach(function(sidebar) {
-            var currentTop = parseInt(window.getComputedStyle(sidebar).top, 10) || 0;
-            sidebar.style.top = (currentTop + offset) + 'px';
-        });
-    }
-});
-JS;
-
-        $viewHelpers = $services->get('ViewHelperManager');
-        $viewHelpers->get('headScript')->appendScript($script);
+        $this->loadBannerAssets($renderer);
+        $this->appendRenderScript($renderer, [
+            'contentSelector' => 'content',
+            'admin' => true,
+            'banners' => $banners,
+        ]);
     }
 
     /**
@@ -210,89 +223,160 @@ JS;
         $contentSelector = $this->getContentSelector($themeId);
         $settings = $services->get('Omeka\Settings');
 
-        $globalEnabled   = (bool) $settings->get('global_banner_enabled');
-        $globalText      = (string) $settings->get('global_banner_text', '');
-        $globalBgColor   = (string) $settings->get('global_banner_bg_color', BANNER_GLOBAL_DEFAULT_BG_COLOR);
-        $globalTextColor = (string) $settings->get('global_banner_text_color', BANNER_GLOBAL_DEFAULT_TEXT_COLOR);
+        $globalText = (string) $settings->get('global_banner_text', '');
+        $hasGlobal = (bool) $settings->get('global_banner_enabled')
+            && $this->hasVisibleText($globalText);
 
         try {
-            $siteEnabled   = (bool) $renderer->siteSetting('site_banner_enabled');
-            $siteText      = (string) $renderer->siteSetting('site_banner_text', '');
-            $siteBgColor   = (string) $renderer->siteSetting('site_banner_bg_color', BANNER_SITE_DEFAULT_BG_COLOR);
-            $siteTextColor = (string) $renderer->siteSetting('site_banner_text_color', BANNER_SITE_DEFAULT_TEXT_COLOR);
+            $siteText = (string) $renderer->siteSetting('site_banner_text', '');
+            $hasSite = (bool) $renderer->siteSetting('site_banner_enabled')
+                && $this->hasVisibleText($siteText);
+            $siteBgColor = $this->validColor(
+                $renderer->siteSetting('site_banner_bg_color'),
+                BANNER_SITE_DEFAULT_BG_COLOR
+            );
+            $siteTextColor = $this->validColor(
+                $renderer->siteSetting('site_banner_text_color'),
+                BANNER_SITE_DEFAULT_TEXT_COLOR
+            );
         } catch (\Exception $e) {
-            $siteEnabled   = false;
-            $siteText      = '';
-            $siteBgColor   = BANNER_SITE_DEFAULT_BG_COLOR;
+            $hasSite = false;
+            $siteText = '';
+            $siteBgColor = BANNER_SITE_DEFAULT_BG_COLOR;
             $siteTextColor = BANNER_SITE_DEFAULT_TEXT_COLOR;
         }
-
-        $hasGlobal = $globalEnabled && $globalText !== '';
-        $hasSite   = $siteEnabled && $siteText !== '';
 
         if (!$hasGlobal && !$hasSite) {
             return;
         }
 
-        $jsContentSelector = json_encode($contentSelector);
-        $script = "document.addEventListener('DOMContentLoaded', function() {\n";
-        $script .= "    var content = document.getElementById({$jsContentSelector});\n";
-        $script .= "    if (!content) return;\n";
+        $sanitizer = new HtmlSanitizer();
+        $banners = [];
 
         if ($hasGlobal) {
-            $jsText      = json_encode($globalText);
-            $jsBgColor   = json_encode($globalBgColor);
-            $jsTextColor = json_encode($globalTextColor);
-            $script .= "    var globalBanner = document.createElement('div');\n";
-            $script .= "    globalBanner.id = 'global-banner';\n";
-            $script .= "    globalBanner.className = 'omeka-banner global-banner';\n";
-            $script .= "    globalBanner.style.width = '100%';\n";
-            $script .= "    globalBanner.style.backgroundColor = {$jsBgColor};\n";
-            $script .= "    globalBanner.style.color = {$jsTextColor};\n";
-            $script .= "    globalBanner.style.display = 'flex';\n";
-            $script .= "    globalBanner.style.alignItems = 'center';\n";
-            $script .= "    globalBanner.style.justifyContent = 'center';\n";
-            $script .= "    globalBanner.style.padding = '0.75em 1em';\n";
-            $script .= "    globalBanner.style.boxSizing = 'border-box';\n";
-            $script .= "    var globalP = document.createElement('p');\n";
-            $script .= "    globalP.style.margin = '0';\n";
-            $script .= "    globalP.style.textAlign = 'center';\n";
-            $script .= "    globalP.style.fontWeight = 'bold';\n";
-            $script .= "    globalP.style.fontSize = '1.1em';\n";
-            $script .= "    globalP.style.whiteSpace = 'pre-wrap';\n";
-            $script .= "    globalP.textContent = {$jsText};\n";
-            $script .= "    globalBanner.appendChild(globalP);\n";
-            $script .= "    content.parentNode.insertBefore(globalBanner, content);\n";
+            $banners[] = [
+                'id' => 'global-banner',
+                'className' => 'global-banner',
+                'label' => $renderer->translate('Global announcement'),
+                'html' => $sanitizer->toDisplayHtml($globalText),
+                'bgColor' => $this->validColor(
+                    $settings->get('global_banner_bg_color'),
+                    BANNER_GLOBAL_DEFAULT_BG_COLOR
+                ),
+                'textColor' => $this->validColor(
+                    $settings->get('global_banner_text_color'),
+                    BANNER_GLOBAL_DEFAULT_TEXT_COLOR
+                ),
+            ];
         }
 
         if ($hasSite) {
-            $jsText      = json_encode($siteText);
-            $jsBgColor   = json_encode($siteBgColor);
-            $jsTextColor = json_encode($siteTextColor);
-            $script .= "    var siteBanner = document.createElement('div');\n";
-            $script .= "    siteBanner.id = 'site-banner';\n";
-            $script .= "    siteBanner.className = 'omeka-banner site-banner';\n";
-            $script .= "    siteBanner.style.width = '100%';\n";
-            $script .= "    siteBanner.style.backgroundColor = {$jsBgColor};\n";
-            $script .= "    siteBanner.style.color = {$jsTextColor};\n";
-            $script .= "    siteBanner.style.display = 'flex';\n";
-            $script .= "    siteBanner.style.alignItems = 'center';\n";
-            $script .= "    siteBanner.style.justifyContent = 'center';\n";
-            $script .= "    siteBanner.style.padding = '0.75em 1em';\n";
-            $script .= "    siteBanner.style.boxSizing = 'border-box';\n";
-            $script .= "    var siteP = document.createElement('p');\n";
-            $script .= "    siteP.style.margin = '0';\n";
-            $script .= "    siteP.style.textAlign = 'center';\n";
-            $script .= "    siteP.style.fontWeight = 'bold';\n";
-            $script .= "    siteP.style.fontSize = '1.1em';\n";
-            $script .= "    siteP.style.whiteSpace = 'pre-wrap';\n";
-            $script .= "    siteP.textContent = {$jsText};\n";
-            $script .= "    siteBanner.appendChild(siteP);\n";
-            $script .= "    content.parentNode.insertBefore(siteBanner, content);\n";
+            $banners[] = [
+                'id' => 'site-banner',
+                'className' => 'site-banner',
+                'label' => $renderer->translate('Site announcement'),
+                'html' => $sanitizer->toDisplayHtml($siteText),
+                'bgColor' => $siteBgColor,
+                'textColor' => $siteTextColor,
+            ];
         }
 
-        $script .= "});\n";
+        $this->loadBannerAssets($renderer);
+        $this->appendRenderScript($renderer, [
+            'contentSelector' => $contentSelector,
+            'admin' => false,
+            'banners' => $banners,
+        ]);
+    }
 
-        $renderer->headScript()->appendScript($script);
+    /**
+     * Add the banner script and stylesheet to a page.
+     */
+    private function loadBannerAssets(PhpRenderer $renderer): void
+    {
+        $renderer->headLink()->appendStylesheet(
+            self::assetUrlFor($renderer, 'css/banner.css')
+        );
+        $renderer->headScript()->appendFile(
+            self::assetUrlFor($renderer, 'js/banner.js')
+        );
+    }
+
+    /**
+     * URL for a module asset, versioned by file mtime so browsers pick up
+     * module updates even though the module version may not change.
+     */
+    public static function assetUrlFor(PhpRenderer $renderer, string $file): string
+    {
+        $url = (string) $renderer->assetUrl($file, 'Banner', false, false);
+        $path = __DIR__ . '/asset/' . $file;
+        $version = is_file($path) ? filemtime($path) : false;
+
+        return $version ? $url . '?v=' . $version : $url;
+    }
+
+    /**
+     * Append the inline script that hands the banner configuration to the
+     * shared renderer. JSON_HEX_TAG prevents banner text from closing the
+     * inline script element.
+     */
+    private function appendRenderScript(PhpRenderer $renderer, array $options): void
+    {
+        $json = json_encode(
+            $options,
+            JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT
+                | JSON_INVALID_UTF8_SUBSTITUTE
+        );
+
+        $renderer->headScript()->appendScript(
+            'document.addEventListener("DOMContentLoaded", function () {'
+            . ' OmekaBanner.render(' . $json . ');'
+            . ' });'
+        );
+    }
+
+    /**
+     * Whether sanitized/stored banner text has anything visible in it.
+     */
+    private function hasVisibleText(string $text): bool
+    {
+        $text = html_entity_decode(
+            strip_tags($text),
+            ENT_QUOTES | ENT_HTML5,
+            'UTF-8'
+        );
+        // Treat non-breaking spaces left by the editor as empty too.
+        return '' !== trim($text, " \t\n\r\0\x0B\xC2\xA0");
+    }
+
+    /**
+     * Validate a posted/stored color, falling back to a known default.
+     */
+    private function validColor($color, string $fallback): string
+    {
+        if (is_string($color)) {
+            $color = trim($color);
+            if (ColorContrast::isValidColor($color)) {
+                return $color;
+            }
+        }
+        return $fallback;
+    }
+
+    /**
+     * Emit a warning when the administrator's color choice is below WCAG AA.
+     *
+     * The colors are deliberately kept: the module warns but does not override
+     * the administrator's decision.
+     */
+    private function warnOnLowContrast(
+        AbstractController $controller,
+        string $bgColor,
+        string $textColor
+    ): void {
+        $message = ColorContrast::warningMessage($bgColor, $textColor);
+        if (null !== $message) {
+            $controller->messenger()->addWarning($message);
+        }
     }
 }
